@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GENZ Chat</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GENZ Chat web</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     * { box-sizing: border-box; }
     body {
@@ -40,7 +40,7 @@
     }
     button { background: #6c5ce7; color: white; cursor: pointer; }
     .chat-box {
-      height: 50vh;
+      height: 70vh;
       overflow-y: auto;
       border: 1px solid #444;
       padding: 10px;
@@ -54,7 +54,6 @@
     .message .actions { position: absolute; top: 0; right: 0; display: none; }
     .message:hover .actions { display: block; }
     .input-area { display: flex; gap: 5px; margin-top: 10px; }
-    #preview { display: none; max-width: 100%; margin: 10px 0; border-radius: 6px; }
     .online-box {
       background: #111;
       padding: 10px;
@@ -74,27 +73,43 @@
     }
     .room-list div {
       background: #333;
-      padding: 8px;
+      padding: 8px 12px;
       margin: 5px 0;
       border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       cursor: pointer;
+    }
+    .room-list button {
+      background: none;
+      border: none;
+      color: red;
+      font-size: 14px;
+    }
+    .back-button {
+      position: sticky;
+      top: 0;
+      background: #222;
+      z-index: 10;
+      padding: 10px 0;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="screen active" id="home">
-      <h2>GENZ Chat</h2>
-      <input type="text" id="username" placeholder="Nama kamu dulu">
+      <h2>WELCOME TO GENZ Chat</h2>
+      <input type="text" id="username" placeholder="Masukan Nama kamu" />
       <button onclick="askRoom()">Lanjut</button>
     </div>
 
     <div class="screen" id="menu">
       <h2>Hai <span id="displayUser"></span></h2>
       <button onclick="joinRoom('genz')">Masuk ke Room Publik</button>
-      <hr>
-      <input type="text" id="private-room" placeholder="Nama Room">
-      <input type="password" id="private-pass" placeholder="Password">
+      <hr />
+      <input type="text" id="private-room" placeholder="Nama Room" />
+      <input type="password" id="private-pass" placeholder="Password" />
       <button onclick="createPrivateRoom()">Buat / Masuk Room Privat</button>
       <div class="room-list" id="roomList">
         <h3>Room Privat Tersedia:</h3>
@@ -103,41 +118,234 @@
     </div>
 
     <div class="screen" id="chat">
-      <button onclick="leaveRoom()"><i class="fas fa-arrow-left"></i> Kembali</button>
+      <div class="back-button">
+        <button onclick="leaveRoom()"><i class="fas fa-arrow-left"></i> Kembali</button>
+      </div>
       <h2 id="room-title">Room</h2>
       <div class="online-box">
         <div><b>Online (<span id="online-count">0</span>)</b>:</div>
         <ul id="online-users" style="margin: 5px 0 0 15px; padding: 0;"></ul>
       </div>
       <div class="chat-box" id="messages"></div>
-      <img id="preview" />
       <div class="input-area">
-<div id="textPreview" style="font-size:14px; color:#bbb; padding:5px;"></div>
-        <input type="text" id="msg" placeholder="Ketik pesan...">
+        <input type="text" id="msg" placeholder="Ketik pesan..." />
         <button onclick="sendMsg()">Kirim</button>
       </div>
-      <input type="file" id="file" accept="image/*,audio/*" multiple onchange="previewFile(event)">
+      <input type="file" id="file" accept="image/*,audio/*" multiple onchange="previewFile(event)" />
       <button onclick="toggleRecord()" id="record-btn"><i class="fas fa-microphone"></i> Rekam</button>
     </div>
   </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBtUvKXj4voaj3TFe-LJM6vhInh4hhO8uk",
-      authDomain: "chat-discord-clone.firebaseapp.com",
-      databaseURL: "https://chat-discord-clone-default-rtdb.firebaseio.com",
-      projectId: "chat-discord-clone",
-      storageBucket: "chat-discord-clone.appspot.com",
-      messagingSenderId: "426694563075",
-      appId: "1:426694563075:web:1b1ac0d2cb51e1f0134536"
-    };
-    firebase.initializeApp(firebaseConfig);
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBtUvKXj4voaj3TFe-LJM6vhInh4hhO8uk",
+  authDomain: "chat-discord-clone.firebaseapp.com",
+  databaseURL: "https://chat-discord-clone-default-rtdb.firebaseio.com",
+  projectId: "chat-discord-clone",
+  storageBucket: "chat-discord-clone.appspot.com",
+  messagingSenderId: "426694563075",
+  appId: "1:426694563075:web:1b1ac0d2cb51e1f0134536"
+};
+firebase.initializeApp(firebaseConfig);
 
+let user = "";
+const ADMIN_USERNAME = "Admin";
+let avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + Math.floor(Math.random() * 999);
+let currentRoom = "";
+let dbRef, onlineRef;
+let passwordDB = firebase.database().ref("roomPasswords");
+let connectedRef = firebase.database().ref(".info/connected");
+let blockedUsers = [];
+let mutedUsers = [];
+let onlineUsers = [];
 
-function highlightMentions(text) {
-  return text.replace(/@(\w+)/g, '<span style="color: #ffeaa7; background:#636e72; padding:2px 4px; border-radius:4px;">@$1</span>');
+function encrypt(text) {
+  return btoa(unescape(encodeURIComponent(text)));
+}
+function decrypt(text) {
+  return decodeURIComponent(escape(atob(text)));
 }
 
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function askRoom() {
+  const uname = document.getElementById("username").value.trim();
+  if (!uname) return alert("Masukkan nama kamu dulu!");
+  if (uname === ADMIN_USERNAME) {
+    const adminPass = prompt("Masukkan kode rahasia admin:");
+    if (adminPass !== "adminojiganteng") {
+      alert("Kode admin salah! Kamu tidak bisa login sebagai admin.");
+      user = "";
+      return;
+    }
+  }
+  user = uname;
+  document.getElementById("displayUser").innerText = user;
+  show("menu");
+  loadRoomList();
+}
+
+function loadRoomList() {
+  passwordDB.once("value", snap => {
+    const rooms = snap.val() || {};
+    let list = "";
+    for (const room in rooms) {
+      list += `<div onclick="joinPrivate('${room}')">${room}`;
+      if (user === ADMIN_USERNAME) {
+        list += `<button onclick="event.stopPropagation(); deleteRoom('${room}')"><i class="fas fa-trash"></i></button>`;
+      }
+      list += `</div>`;
+    }
+    document.getElementById("roomItems").innerHTML = list || "Belum ada room";
+  });
+}
+
+function deleteRoom(roomName) {
+  if (!confirm(`Yakin ingin hapus room "${roomName}"?`)) return;
+  firebase.database().ref("roomPasswords/" + roomName).remove();
+  firebase.database().ref("messages/" + roomName).remove();
+  firebase.database().ref("onlineUsers/" + roomName).remove();
+  alert(`Room "${roomName}" berhasil dihapus`);
+  loadRoomList();
+}
+
+function blockUser(name) {
+  if (!blockedUsers.includes(name)) {
+    blockedUsers.push(name);
+    alert(`User ${name} telah diblokir`);
+  }
+}
+
+function toggleMute(name) {
+  const index = mutedUsers.indexOf(name);
+  if (index > -1) {
+    mutedUsers.splice(index, 1);
+    alert(`User ${name} tidak lagi di-mute`);
+  } else {
+    mutedUsers.push(name);
+    alert(`User ${name} di-mute`);
+  }
+}
+
+function joinRoom(room) {
+  currentRoom = room;
+  dbRef = firebase.database().ref("messages/" + room);
+  onlineRef = firebase.database().ref("onlineUsers/" + room);
+
+  document.getElementById("messages").innerHTML = "";
+  dbRef.off();
+  dbRef.on("child_added", snap => {
+    const msg = snap.val();
+    if (blockedUsers.includes(msg.user) || mutedUsers.includes(msg.user)) return;
+    const div = document.createElement("div");
+    div.className = "message";
+
+    if (msg.text) {
+      let decrypted = "";
+      try { decrypted = decrypt(msg.text); } catch (e) { decrypted = msg.text; }
+      if (decrypted.includes("@" + user)) {
+        alert(`${msg.user} menyebut anda`);
+      }
+      div.innerHTML = `<img class='avatar' src='${msg.avatar}'> <span>${msg.user}</span>: <span class='msg-text'>${decrypted}</span>`;
+      if (msg.sender === user) {
+        const btns = document.createElement("div");
+        btns.className = "actions";
+        btns.innerHTML = `
+          <button onclick="editMsg('${snap.key}')"><i class="fas fa-pen"></i></button>
+          <button onclick="deleteMsg('${snap.key}')"><i class="fas fa-trash"></i></button>
+        `;
+        div.appendChild(btns);
+      }
+    } else if (msg.image) {
+      div.innerHTML = `<span>${msg.user}</span>: <img src="${msg.image}" style="max-width:100%;">`;
+    } else if (msg.audio) {
+      div.innerHTML = `<span>${msg.user}</span>: <audio controls src="${msg.audio}"></audio>`;
+    } else if (msg.system) {
+      div.innerHTML = `<i>${msg.system}</i>`;
+    }
+
+    document.getElementById("messages").appendChild(div);
+    div.scrollIntoView({ behavior: "smooth" });
+  });
+
+  connectedRef.on("value", snap => {
+    if (snap.val() === true) {
+      const userRef = onlineRef.child(user);
+      userRef.set(true);
+      userRef.onDisconnect().remove();
+      dbRef.push({ system: `🔔 ${user} bergabung` });
+    }
+  });
+
+  onlineRef.on("value", snap => {
+    const data = snap.val() || {};
+    onlineUsers = Object.keys(data);
+    document.getElementById("online-count").innerText = onlineUsers.length;
+    document.getElementById("online-users").innerHTML = onlineUsers.map(n => {
+      let btn = "";
+      if (user === ADMIN_USERNAME && n !== ADMIN_USERNAME) {
+        btn = `
+          <button onclick="blockUser('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-ban"></i></button>
+          <button onclick="toggleMute('${n}')" style="color:orange;background:none;border:none;"><i class="fas fa-volume-mute"></i></button>
+        `;
+      }
+      return `
+  <li style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+    <span>${n}</span>
+    <span>${btn}</span>
+  </li>
+`;
+    }).join("");
+  });
+
+  document.getElementById("room-title").innerText = room.toUpperCase();
+  show("chat");
+}
+
+function createPrivateRoom() {
+  const room = document.getElementById("private-room").value.trim();
+  const pass = document.getElementById("private-pass").value.trim();
+  if (!room || !pass) return alert("Isi nama room dan password!");
+  passwordDB.child(room).once("value", snap => {
+    if (snap.exists() && snap.val() !== pass) {
+      alert("Password salah!");
+    } else {
+      passwordDB.child(room).set(pass);
+      joinRoom(room);
+    }
+  });
+}
+
+function joinPrivate(room) {
+  const input = prompt(`Masukkan password untuk ${room}`);
+  passwordDB.child(room).once("value", snap => {
+    if (!snap.exists()) {
+      alert("Room sudah dihapus");
+    } else if (snap.val() === input) {
+      joinRoom(room);
+    } else {
+      alert("Password salah");
+    }
+  });
+}
+
+function leaveRoom() {
+  if (onlineRef) onlineRef.child(user).remove();
+  if (dbRef) dbRef.push({ system: `❌ ${user} keluar` });
+  show("menu");
+}
+
+function sendMsg() {
+  const text = document.getElementById("msg").value.trim();
+  if (text) {
+    const encrypted = encrypt(text);
+    dbRef.push({ user, text: encrypted, avatar, sender: user });
+  }
+  document.getElementById("msg").value = "";
+}
 
 function editMsg(key) {
   const newText = prompt("Edit pesan:");
@@ -148,191 +356,60 @@ function deleteMsg(key) {
   if (confirm("Hapus pesan ini?")) dbRef.child(key).remove();
 }
 
-function encrypt(text) {
-  return btoa(unescape(encodeURIComponent(text)));
+function previewFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const result = evt.target.result;
+    if (file.type.startsWith("image")) {
+      dbRef.push({ user, image: result });
+    } else if (file.type.startsWith("audio")) {
+      dbRef.push({ user, audio: result });
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
-function decrypt(text) {
-  return decodeURIComponent(escape(atob(text)));
-}
+let isRecording = false;
+let mediaRecorder;
+let audioChunks = [];
 
-document.getElementById("msg").addEventListener("input", e => {
-  const val = e.target.value;
-  document.getElementById("textPreview").innerHTML = highlightMentions(val);
-});
-
-
-    let user = "";
-    let avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + Math.floor(Math.random() * 999);
-    let currentRoom = "";
-    let dbRef;
-    let onlineRef;
-    let passwordDB = firebase.database().ref("roomPasswords");
-    let connectedRef = firebase.database().ref(".info/connected");
-
-    function askRoom() {
-      const uname = document.getElementById("username").value.trim();
-      if (!uname) return alert("Masukkan nama kamu dulu!");
-      user = uname;
-      document.getElementById("displayUser").innerText = user;
-      show("menu");
-      loadRoomList();
-    }
-
-    function show(screen) {
-      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-      document.getElementById(screen).classList.add("active");
-    }
-
-    function loadRoomList() {
-      passwordDB.once("value", snap => {
-        const rooms = snap.val() || {};
-        const list = Object.keys(rooms).map(room => `<div onclick=\"joinPrivate('${room}')\">${room}</div>`).join("");
-        document.getElementById("roomItems").innerHTML = list || "Belum ada room";
-      });
-    }
-
-    function joinRoom(room) {
-      currentRoom = room;
-      dbRef = firebase.database().ref("messages/" + room);
-      onlineRef = firebase.database().ref("onlineUsers/" + room);
-
-      document.getElementById("messages").innerHTML = "";
-      dbRef.off();
-      dbRef.on("child_added", snap => {
-        const msg = snap.val();
-        const div = document.createElement("div");
-        div.className = "message";
-        if (msg.text) {
-          let decrypted = "";
-          try {
-            decrypted = decrypt(msg.text);
-          } catch (e) {
-            decrypted = msg.text;
-          }
-          const highlighted = highlightMentions(decrypted);
-          div.innerHTML = `<img class='avatar' src='${msg.avatar}'> <span>${msg.user}</span>: <span class='msg-text'>${highlighted}</span>`;
-
-          if (msg.sender === user) {
-            const btns = document.createElement("div");
-            btns.className = "actions";
-            btns.innerHTML = `
-              <button onclick="editMsg('${snap.key}')"><i class="fas fa-pen"></i></button>
-              <button onclick="deleteMsg('${snap.key}')"><i class="fas fa-trash"></i></button>
-            `;
-            div.appendChild(btns);
-          }
-        }
-        else if (msg.image) div.innerHTML = `<span>${msg.user}</span>: <img src="${msg.image}" style="max-width:100%;">`;
-        else if (msg.audio) div.innerHTML = `<span>${msg.user}</span>: <audio controls src="${msg.audio}"></audio>`;
-        else if (msg.system) div.innerHTML = `<i>${msg.system}</i>`;
-        document.getElementById("messages").appendChild(div);
-        div.scrollIntoView({ behavior: "smooth" });
-      });
-
-      connectedRef.on("value", snap => {
-        if (snap.val() === true) {
-          const userRef = onlineRef.child(user);
-          userRef.set(true);
-          userRef.onDisconnect().remove();
-          dbRef.push({ system: `🔔 ${user} bergabung` });
-        }
-      });
-
-      onlineRef.on("value", snap => {
-        const data = snap.val() || {};
-        const names = Object.keys(data);
-        document.getElementById("online-count").innerText = names.length;
-        document.getElementById("online-users").innerHTML = names.map(n => `<li>${n}</li>`).join("");
-      });
-
-      document.getElementById("room-title").innerText = room.toUpperCase();
-      show("chat");
-    }
-
-    function createPrivateRoom() {
-      const room = document.getElementById("private-room").value.trim();
-      const pass = document.getElementById("private-pass").value.trim();
-      if (!room || !pass) return alert("Isi nama room dan password!");
-      passwordDB.child(room).once("value", snap => {
-        if (snap.exists() && snap.val() !== pass) {
-          alert("Password salah!");
-        } else {
-          passwordDB.child(room).set(pass);
-          joinRoom(room);
-        }
-      });
-    }
-
-    function joinPrivate(room) {
-      const input = prompt(`Masukkan password untuk ${room}`);
-      passwordDB.child(room).once("value", snap => {
-        if (snap.exists() && snap.val() === input) {
-          joinRoom(room);
-        } else {
-          alert("Password salah atau room tidak ada");
-        }
-      });
-    }
-
-    function leaveRoom() {
-      if (onlineRef) onlineRef.child(user).remove();
-      if (dbRef) dbRef.push({ system: `❌ ${user} keluar` });
-      show("menu");
-    }
-
-    function sendMsg() {
-      const text = document.getElementById("msg").value.trim();
-      if (text) {
-        const encrypted = encrypt(text);
-        dbRef.push({ user, text: encrypted, avatar, sender: user });
-      }
-      document.getElementById("msg").value = "";
-    }
-
-    function previewFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+async function toggleRecord() {
+  const btn = document.getElementById("record-btn");
+  if (!isRecording) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.start();
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
       const reader = new FileReader();
-      reader.onload = function(evt) {
-        const result = evt.target.result;
-        if (file.type.startsWith("image")) {
-          document.getElementById("preview").src = result;
-          document.getElementById("preview").style.display = "block";
-          dbRef.push({ user, image: result });
-        } else if (file.type.startsWith("audio")) {
-          dbRef.push({ user, audio: result });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+      reader.onloadend = () => dbRef.push({ user, audio: reader.result });
+      reader.readAsDataURL(blob);
+    };
+    isRecording = true;
+  } else {
+    mediaRecorder.stop();
+    btn.innerHTML = '<i class="fas fa-microphone"></i> Rekam';
+    isRecording = false;
+  }
+}
 
-    let isRecording = false;
-    let mediaRecorder;
-    let audioChunks = [];
-
-    async function toggleRecord() {
-      const btn = document.getElementById("record-btn");
-      if (!isRecording) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-        btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-        audioChunks = [];
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
-          const reader = new FileReader();
-          reader.onloadend = () => dbRef.push({ user, audio: reader.result });
-          reader.readAsDataURL(blob);
-        };
-        isRecording = true;
-      } else {
-        mediaRecorder.stop();
-        btn.innerHTML = '<i class="fas fa-microphone"></i> Rekam';
-        isRecording = false;
-      }
+document.getElementById("msg").addEventListener("input", function () {
+  const val = this.value;
+  const atIndex = val.lastIndexOf("@");
+  if (atIndex !== -1) {
+    const typed = val.slice(atIndex + 1).toLowerCase();
+    const matches = onlineUsers.filter(name => name.toLowerCase().startsWith(typed));
+    if (matches.length > 0) {
+      const suggestion = matches[0];
+      this.value = val.slice(0, atIndex + 1) + suggestion + " ";
     }
-  </script>
+  }
+});
+</script>
 </body>
 </html>
