@@ -3,157 +3,122 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GENZ Chat App</title>
+  <title>GENZ Chat</title>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: 'Rubik', sans-serif;
-      background: linear-gradient(135deg, #1c1c1c, #2a2a72);
+      font-family: sans-serif;
+      background: linear-gradient(to bottom right, #1e1e2f, #3c3c6b);
       color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      overflow: hidden;
     }
-    .chat-container {
+    .container {
       width: 100%;
       max-width: 500px;
-      height: 85vh;
-      background: #1f1f2e;
-      border-radius: 16px;
-      display: none;
-      flex-direction: column;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      overflow: hidden;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    .chat-header {
-      background: #6c5ce7;
-      color: white;
-      padding: 20px;
-      font-weight: bold;
-      font-size: 18px;
-      text-align: center;
-      border-bottom: 1px solid #444;
-    }
-    .messages {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .message {
-      background: #2d2d44;
-      padding: 10px 15px;
-      border-radius: 12px;
-      animation: slideIn 0.3s ease forwards;
-    }
-    .message span {
-      font-weight: bold;
-      color: #74b9ff;
-      display: block;
-      margin-bottom: 5px;
-    }
-    .input-area {
-      display: flex;
-      border-top: 1px solid #444;
       background: #222;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      overflow: hidden;
     }
-    .input-area input {
-      flex: 1;
+    .screen { display: none; padding: 20px; }
+    .screen.active { display: block; }
+    h2 { text-align: center; margin-top: 0; }
+    button, input[type=text], input[type=password] {
+      width: 100%;
       padding: 12px;
-      border: none;
-      background: transparent;
-      color: white;
-      font-size: 16px;
-    }
-    .input-area button {
-      background: #6c5ce7;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-    .input-area button:hover {
-      background: #4834d4;
-    }
-    #login-btn, #logout-btn {
-      padding: 12px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #00cec9;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-      margin: 10px auto;
-      display: block;
-      transition: background 0.3s ease;
-    }
-    #login-btn:hover, #logout-btn:hover {
-      background: #0984e3;
-    }
-    #pass-form {
-      text-align: center;
-      background: #2d2d44;
-      padding: 20px;
-      border-radius: 10px;
-      animation: fadeIn 0.5s ease;
-    }
-    #pass-form input {
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
       margin: 10px 0;
-      width: 60%;
-    }
-    #pass-form button {
-      padding: 10px 20px;
       font-size: 16px;
       border: none;
+      border-radius: 6px;
+    }
+    button { background: #6c5ce7; color: white; cursor: pointer; }
+    .chat-box {
+      height: 50vh;
+      overflow-y: auto;
+      border: 1px solid #444;
+      padding: 10px;
+      margin: 10px 0;
+      background: #2f2f4f;
       border-radius: 8px;
-      background: #00cec9;
-      color: white;
-      font-weight: bold;
+    }
+    .message { margin: 5px 0; position: relative; }
+    .message span { font-weight: bold; color: #74b9ff; }
+    .message .avatar { width: 24px; height: 24px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .message .actions { position: absolute; top: 0; right: 0; display: none; }
+    .message:hover .actions { display: block; }
+    .input-area { display: flex; gap: 5px; margin-top: 10px; }
+    #preview { display: none; max-width: 100%; margin: 10px 0; border-radius: 6px; }
+    .online-box {
+      background: #111;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .room-list {
+      background: #111;
+      padding: 10px;
+      margin-top: 20px;
+      border-radius: 6px;
+    }
+    .room-list h3 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+    .room-list div {
+      background: #333;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
   </style>
 </head>
 <body>
-  <button id="login-btn">Login dengan Google</button>
-  <div id="pass-form" style="display:none">
-    <p>Masukkan password untuk room ini:</p>
-    <input type="password" id="room-pass" placeholder="Password">
-    <button onclick="verifyPassword()">Masuk</button>
-  </div>
-
-  <div class="chat-container" id="chat">
-    <div class="chat-header" id="room-name">GENZ Server</div>
-    <div class="messages" id="messages"></div>
-    <div class="input-area">
-      <input type="text" id="msg-input" placeholder="Ketik pesan...">
-      <button onclick="sendMsg()">Kirim</button>
+  <div class="container">
+    <div class="screen active" id="home">
+      <h2>GENZ Chat</h2>
+      <input type="text" id="username" placeholder="Nama kamu dulu">
+      <button onclick="askRoom()">Lanjut</button>
     </div>
-    <button id="logout-btn" onclick="logout()">Logout</button>
+
+    <div class="screen" id="menu">
+      <h2>Hai <span id="displayUser"></span></h2>
+      <button onclick="joinRoom('genz')">Masuk ke Room Publik</button>
+      <hr>
+      <input type="text" id="private-room" placeholder="Nama Room">
+      <input type="password" id="private-pass" placeholder="Password">
+      <button onclick="createPrivateRoom()">Buat / Masuk Room Privat</button>
+      <div class="room-list" id="roomList">
+        <h3>Room Privat Tersedia:</h3>
+        <div id="roomItems">Memuat...</div>
+      </div>
+    </div>
+
+    <div class="screen" id="chat">
+      <button onclick="leaveRoom()"><i class="fas fa-arrow-left"></i> Kembali</button>
+      <h2 id="room-title">Room</h2>
+      <div class="online-box">
+        <div><b>Online (<span id="online-count">0</span>)</b>:</div>
+        <ul id="online-users" style="margin: 5px 0 0 15px; padding: 0;"></ul>
+      </div>
+      <div class="chat-box" id="messages"></div>
+      <img id="preview" />
+      <div class="input-area">
+<div id="textPreview" style="font-size:14px; color:#bbb; padding:5px;"></div>
+        <input type="text" id="msg" placeholder="Ketik pesan...">
+        <button onclick="sendMsg()">Kirim</button>
+      </div>
+      <input type="file" id="file" accept="image/*,audio/*" multiple onchange="previewFile(event)">
+      <button onclick="toggleRecord()" id="record-btn"><i class="fas fa-microphone"></i> Rekam</button>
+    </div>
   </div>
 
   <script>
@@ -166,80 +131,208 @@
       messagingSenderId: "426694563075",
       appId: "1:426694563075:web:1b1ac0d2cb51e1f0134536"
     };
-
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
 
-    const params = new URLSearchParams(location.search);
-    const room = params.get('room') || 'genz';
-    const expectedPass = params.get('pass') || '';
 
-    const whitelist = {
-      'oji-dina': ['mlbbsaya10@gmail.com', 'dina@gmail.com']
-    };
+function highlightMentions(text) {
+  return text.replace(/@(\w+)/g, '<span style="color: #ffeaa7; background:#636e72; padding:2px 4px; border-radius:4px;">@$1</span>');
+}
 
-    let userName = '', userEmail = '';
-    let msgRef;
 
-    function showChat() {
-      document.getElementById('chat').style.display = 'flex';
-      document.getElementById('room-name').textContent = `Room: ${room}`;
-      msgRef = db.ref('rooms/' + room);
-      msgRef.on('child_added', snap => {
-        const data = snap.val();
-        const el = document.createElement('div');
-        el.className = 'message';
-        el.innerHTML = `<span>${data.user}:</span> ${data.text}`;
-        document.getElementById('messages').appendChild(el);
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+function editMsg(key) {
+  const newText = prompt("Edit pesan:");
+  if (newText) dbRef.child(key).update({ text: encrypt(newText) });
+}
+
+function deleteMsg(key) {
+  if (confirm("Hapus pesan ini?")) dbRef.child(key).remove();
+}
+
+function encrypt(text) {
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+function decrypt(text) {
+  return decodeURIComponent(escape(atob(text)));
+}
+
+document.getElementById("msg").addEventListener("input", e => {
+  const val = e.target.value;
+  document.getElementById("textPreview").innerHTML = highlightMentions(val);
+});
+
+
+    let user = "";
+    let avatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + Math.floor(Math.random() * 999);
+    let currentRoom = "";
+    let dbRef;
+    let onlineRef;
+    let passwordDB = firebase.database().ref("roomPasswords");
+    let connectedRef = firebase.database().ref(".info/connected");
+
+    function askRoom() {
+      const uname = document.getElementById("username").value.trim();
+      if (!uname) return alert("Masukkan nama kamu dulu!");
+      user = uname;
+      document.getElementById("displayUser").innerText = user;
+      show("menu");
+      loadRoomList();
+    }
+
+    function show(screen) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screen).classList.add("active");
+    }
+
+    function loadRoomList() {
+      passwordDB.once("value", snap => {
+        const rooms = snap.val() || {};
+        const list = Object.keys(rooms).map(room => `<div onclick=\"joinPrivate('${room}')\">${room}</div>`).join("");
+        document.getElementById("roomItems").innerHTML = list || "Belum ada room";
       });
+    }
+
+    function joinRoom(room) {
+      currentRoom = room;
+      dbRef = firebase.database().ref("messages/" + room);
+      onlineRef = firebase.database().ref("onlineUsers/" + room);
+
+      document.getElementById("messages").innerHTML = "";
+      dbRef.off();
+      dbRef.on("child_added", snap => {
+        const msg = snap.val();
+        const div = document.createElement("div");
+        div.className = "message";
+        if (msg.text) {
+          let decrypted = "";
+          try {
+            decrypted = decrypt(msg.text);
+          } catch (e) {
+            decrypted = msg.text;
+          }
+          const highlighted = highlightMentions(decrypted);
+          div.innerHTML = `<img class='avatar' src='${msg.avatar}'> <span>${msg.user}</span>: <span class='msg-text'>${highlighted}</span>`;
+
+          if (msg.sender === user) {
+            const btns = document.createElement("div");
+            btns.className = "actions";
+            btns.innerHTML = `
+              <button onclick="editMsg('${snap.key}')"><i class="fas fa-pen"></i></button>
+              <button onclick="deleteMsg('${snap.key}')"><i class="fas fa-trash"></i></button>
+            `;
+            div.appendChild(btns);
+          }
+        }
+        else if (msg.image) div.innerHTML = `<span>${msg.user}</span>: <img src="${msg.image}" style="max-width:100%;">`;
+        else if (msg.audio) div.innerHTML = `<span>${msg.user}</span>: <audio controls src="${msg.audio}"></audio>`;
+        else if (msg.system) div.innerHTML = `<i>${msg.system}</i>`;
+        document.getElementById("messages").appendChild(div);
+        div.scrollIntoView({ behavior: "smooth" });
+      });
+
+      connectedRef.on("value", snap => {
+        if (snap.val() === true) {
+          const userRef = onlineRef.child(user);
+          userRef.set(true);
+          userRef.onDisconnect().remove();
+          dbRef.push({ system: `🔔 ${user} bergabung` });
+        }
+      });
+
+      onlineRef.on("value", snap => {
+        const data = snap.val() || {};
+        const names = Object.keys(data);
+        document.getElementById("online-count").innerText = names.length;
+        document.getElementById("online-users").innerHTML = names.map(n => `<li>${n}</li>`).join("");
+      });
+
+      document.getElementById("room-title").innerText = room.toUpperCase();
+      show("chat");
+    }
+
+    function createPrivateRoom() {
+      const room = document.getElementById("private-room").value.trim();
+      const pass = document.getElementById("private-pass").value.trim();
+      if (!room || !pass) return alert("Isi nama room dan password!");
+      passwordDB.child(room).once("value", snap => {
+        if (snap.exists() && snap.val() !== pass) {
+          alert("Password salah!");
+        } else {
+          passwordDB.child(room).set(pass);
+          joinRoom(room);
+        }
+      });
+    }
+
+    function joinPrivate(room) {
+      const input = prompt(`Masukkan password untuk ${room}`);
+      passwordDB.child(room).once("value", snap => {
+        if (snap.exists() && snap.val() === input) {
+          joinRoom(room);
+        } else {
+          alert("Password salah atau room tidak ada");
+        }
+      });
+    }
+
+    function leaveRoom() {
+      if (onlineRef) onlineRef.child(user).remove();
+      if (dbRef) dbRef.push({ system: `❌ ${user} keluar` });
+      show("menu");
     }
 
     function sendMsg() {
-      const input = document.getElementById('msg-input');
-      const text = input.value.trim();
-      if (!text) return;
-      msgRef.push({ user: userName, text });
-      input.value = '';
+      const text = document.getElementById("msg").value.trim();
+      if (text) {
+        const encrypted = encrypt(text);
+        dbRef.push({ user, text: encrypted, avatar, sender: user });
+      }
+      document.getElementById("msg").value = "";
     }
 
-    function verifyPassword() {
-      const inputPass = document.getElementById('room-pass').value;
-      const allowedEmails = whitelist[room];
-
-      if (inputPass === expectedPass) {
-        if (!allowedEmails || allowedEmails.includes(userEmail)) {
-          document.getElementById('pass-form').style.display = 'none';
-          showChat();
-        } else {
-          alert('Email kamu tidak diizinkan untuk room ini.');
+    function previewFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const result = evt.target.result;
+        if (file.type.startsWith("image")) {
+          document.getElementById("preview").src = result;
+          document.getElementById("preview").style.display = "block";
+          dbRef.push({ user, image: result });
+        } else if (file.type.startsWith("audio")) {
+          dbRef.push({ user, audio: result });
         }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    let isRecording = false;
+    let mediaRecorder;
+    let audioChunks = [];
+
+    async function toggleRecord() {
+      const btn = document.getElementById("record-btn");
+      if (!isRecording) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.onloadend = () => dbRef.push({ user, audio: reader.result });
+          reader.readAsDataURL(blob);
+        };
+        isRecording = true;
       } else {
-        alert('Password salah!');
+        mediaRecorder.stop();
+        btn.innerHTML = '<i class="fas fa-microphone"></i> Rekam';
+        isRecording = false;
       }
     }
-
-    function logout() {
-      auth.signOut().then(() => location.reload());
-    }
-
-    document.getElementById('login-btn').addEventListener('click', () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).then(result => {
-        userName = result.user.displayName;
-        userEmail = result.user.email;
-        document.getElementById('login-btn').style.display = 'none';
-        if (room === 'genz') {
-          showChat();
-        } else {
-          document.getElementById('pass-form').style.display = 'block';
-        }
-      }).catch(error => {
-        alert('Login gagal: ' + error.message);
-        console.error(error);
-      });
-    });
   </script>
 </body>
 </html>
