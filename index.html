@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Realtime Chat Grup (Firebase)</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #f9f9f9; }
+    #chat { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; background: white; margin-bottom: 10px; }
+    .msg { margin: 5px 0; }
+    .msg strong { color: #007bff; }
+  </style>
+</head>
+<body>
+  <h2>💬 Realtime Chat Grup</h2>
+  <input type="text" id="username" placeholder="Nama kamu" />
+  <select id="roomSelect">
+    <option value="umum"># Umum</option>
+    <option value="ngoding"># Ngoding</option>
+    <option value="random"># Random</option>
+  </select>
+  <button onclick="joinRoom()">Join</button>
+  <div><strong>Server:</strong> <span id="roomLabel">umum</span></div>
+  <div id="chat"></div>
+  <input type="text" id="message" placeholder="Ketik pesan..." />
+  <button onclick="sendMessage()">Kirim</button>
+
+  <script>
+    // Firebase Config (PUNYAMU)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBtUvKXj4voaj3TFe-LJM6vhInh4hhO8uk",
+      authDomain: "chat-discord-clone.firebaseapp.com",
+      projectId: "chat-discord-clone",
+      storageBucket: "chat-discord-clone.firebasestorage.app",
+      messagingSenderId: "426694563075",
+      appId: "1:426694563075:web:1b1ac0d2cb51e1f0134536",
+      measurementId: "G-XZLDFCDHW9",
+      databaseURL: "https://chat-discord-clone-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let username = "";
+    let currentRoom = "umum";
+    const chat = document.getElementById("chat");
+
+    function joinRoom() {
+      username = document.getElementById("username").value.trim();
+      if (!username) return alert("Masukkan nama kamu dulu");
+
+      currentRoom = document.getElementById("roomSelect").value;
+      document.getElementById("roomLabel").textContent = currentRoom;
+      chat.innerHTML = "";
+
+      loadMessages();
+    }
+
+    function loadMessages() {
+      db.ref("rooms/" + currentRoom).off(); // stop listen sebelumnya
+      db.ref("rooms/" + currentRoom).on("child_added", (snapshot) => {
+        const data = snapshot.val();
+        const div = document.createElement("div");
+        div.className = "msg";
+        div.innerHTML = `<strong>${data.user}</strong> [${data.time}]: ${data.text}`;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+      });
+    }
+
+    function sendMessage() {
+      const msg = document.getElementById("message").value.trim();
+      if (!msg || !username) return;
+
+      const data = {
+        user: username,
+        text: msg,
+        time: new Date().toLocaleTimeString()
+      };
+
+      db.ref("rooms/" + currentRoom).push(data);
+      document.getElementById("message").value = "";
+    }
+
+    joinRoom(); // join default room saat load
+  </script>
+</body>
+</html>
