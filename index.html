@@ -105,7 +105,7 @@
     </div>
 
     <div class="screen" id="menu">
-      <h2>Hai <span id="displayUser"></span></h2>
+      <h2>Hai👋 <span id="displayUser "></span></h2>
       <button onclick="joinRoom('genz')">Masuk ke Room Publik</button>
       <hr />
       <input type="text" id="private-room" placeholder="Nama Room" />
@@ -176,14 +176,14 @@ function askRoom() {
   if (!uname) return alert("Masukkan nama kamu dulu!");
   if (uname === ADMIN_USERNAME) {
     const adminPass = prompt("Masukkan kode rahasia admin:");
-    if (adminPass !== "adminojiganteng") {
+    if (adminPass !== "admin10081") {
       alert("Kode admin salah! Kamu tidak bisa login sebagai admin.");
       user = "";
       return;
     }
   }
   user = uname;
-  document.getElementById("displayUser").innerText = user;
+  document.getElementById("displayUser ").innerText = user;
   show("menu");
   loadRoomList();
 }
@@ -212,10 +212,10 @@ function deleteRoom(roomName) {
   loadRoomList();
 }
 
-function blockUser(name) {
+function blockUser (name) {
   if (!blockedUsers.includes(name)) {
     blockedUsers.push(name);
-    alert(`User ${name} telah diblokir`);
+    alert(`User  ${name} telah diblokir`);
   }
 }
 
@@ -223,10 +223,17 @@ function toggleMute(name) {
   const index = mutedUsers.indexOf(name);
   if (index > -1) {
     mutedUsers.splice(index, 1);
-    alert(`User ${name} tidak lagi di-mute`);
+    alert(`User  ${name} tidak lagi di-mute`);
   } else {
     mutedUsers.push(name);
-    alert(`User ${name} di-mute`);
+    alert(`User  ${name} di-mute`);
+  }
+}
+
+function removeUser FromOnlineList(name) {
+  if (confirm(`Yakin ingin menghapus ${name} dari daftar online?`)) {
+    onlineRef.child(name).remove();
+    alert(`${name} telah dihapus dari daftar online.`);
   }
 }
 
@@ -288,16 +295,17 @@ function joinRoom(room) {
       let btn = "";
       if (user === ADMIN_USERNAME && n !== ADMIN_USERNAME) {
         btn = `
-          <button onclick="blockUser('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-ban"></i></button>
+          <button onclick="removeUser FromOnlineList('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-trash"></i></button>
+          <button onclick="blockUser ('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-ban"></i></button>
           <button onclick="toggleMute('${n}')" style="color:orange;background:none;border:none;"><i class="fas fa-volume-mute"></i></button>
         `;
       }
       return `
-  <li style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-    <span>${n}</span>
-    <span>${btn}</span>
-  </li>
-`;
+        <li style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+          <span>${n}</span>
+          <span>${btn}</span>
+        </li>
+      `;
     }).join("");
   });
 
@@ -378,7 +386,7 @@ let audioChunks = [];
 async function toggleRecord() {
   const btn = document.getElementById("record-btn");
   if (!isRecording) {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await navigator.mediaDevices.getUser Media({ audio: true });
     mediaRecorder = new MediaRecorder(stream);
     mediaRecorder.start();
     btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
