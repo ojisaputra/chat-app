@@ -99,20 +99,29 @@
 <body>
   <div class="container">
     <div class="screen active" id="home">
-      <h2>WELCOME TO GENZ Chat</h2>
+      <h2>WELCOME TO GENZ CHAT</h2>
       <input type="text" id="username" placeholder="Masukan Nama kamu" />
-      <button onclick="askRoom()">Lanjut</button>
+      <button onclick="askRoom()">
+  <i class="fas fa-hand-point-right"></i> LANJUT
+</button>
+
     </div>
 
     <div class="screen" id="menu">
-      <h2>Hai👋 <span id="displayUser "></span></h2>
-      <button onclick="joinRoom('genz')">Masuk ke Room Publik</button>
+      <h2>Hai👋 <span id="displayUser"></span><br>SELAMAT DATANG</h2>
+      <button onclick="joinRoom('genz')">
+  <i class="fas fa-users"></i> MASUK / GABUNG ROOM PUBLIK
+</button>
+
       <hr />
       <input type="text" id="private-room" placeholder="Nama Room" />
       <input type="password" id="private-pass" placeholder="Password" />
-      <button onclick="createPrivateRoom()">Buat / Masuk Room Privat</button>
+      <button onclick="createPrivateRoom()">
+  <i class="fas fa-house-lock"></i> BUAT / MASUK ROOM PRIFAT ID
+</button>
+
       <div class="room-list" id="roomList">
-        <h3>Room Privat Tersedia:</h3>
+        <h3>Room Yang Tersedia / Telah Di Buat:</h3>
         <div id="roomItems">Memuat...</div>
       </div>
     </div>
@@ -129,7 +138,9 @@
       <div class="chat-box" id="messages"></div>
       <div class="input-area">
         <input type="text" id="msg" placeholder="Ketik pesan..." />
-        <button onclick="sendMsg()">Kirim</button>
+        <button onclick="sendMsg()">
+         <i class="fas fa-paper-plane"></i> Kirim
+        </button>
       </div>
       <input type="file" id="file" accept="image/*,audio/*" multiple onchange="previewFile(event)" />
       <button onclick="toggleRecord()" id="record-btn"><i class="fas fa-microphone"></i> Rekam</button>
@@ -183,7 +194,7 @@ function askRoom() {
     }
   }
   user = uname;
-  document.getElementById("displayUser ").innerText = user;
+  document.getElementById("displayUser").innerText = user;
   show("menu");
   loadRoomList();
 }
@@ -212,10 +223,10 @@ function deleteRoom(roomName) {
   loadRoomList();
 }
 
-function blockUser (name) {
+function blockUser(name) {
   if (!blockedUsers.includes(name)) {
     blockedUsers.push(name);
-    alert(`User  ${name} telah diblokir`);
+    alert(`User ${name} telah diblokir`);
   }
 }
 
@@ -223,17 +234,10 @@ function toggleMute(name) {
   const index = mutedUsers.indexOf(name);
   if (index > -1) {
     mutedUsers.splice(index, 1);
-    alert(`User  ${name} tidak lagi di-mute`);
+    alert(`User ${name} tidak lagi di-mute`);
   } else {
     mutedUsers.push(name);
-    alert(`User  ${name} di-mute`);
-  }
-}
-
-function removeUser FromOnlineList(name) {
-  if (confirm(`Yakin ingin menghapus ${name} dari daftar online?`)) {
-    onlineRef.child(name).remove();
-    alert(`${name} telah dihapus dari daftar online.`);
+    alert(`User ${name} di-mute`);
   }
 }
 
@@ -295,17 +299,16 @@ function joinRoom(room) {
       let btn = "";
       if (user === ADMIN_USERNAME && n !== ADMIN_USERNAME) {
         btn = `
-          <button onclick="removeUser FromOnlineList('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-trash"></i></button>
-          <button onclick="blockUser ('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-ban"></i></button>
+          <button onclick="blockUser('${n}')" style="color:red;background:none;border:none;"><i class="fas fa-ban"></i></button>
           <button onclick="toggleMute('${n}')" style="color:orange;background:none;border:none;"><i class="fas fa-volume-mute"></i></button>
         `;
       }
       return `
-        <li style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-          <span>${n}</span>
-          <span>${btn}</span>
-        </li>
-      `;
+  <li style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+    <span>${n}</span>
+    <span>${btn}</span>
+  </li>
+`;
     }).join("");
   });
 
@@ -386,7 +389,7 @@ let audioChunks = [];
 async function toggleRecord() {
   const btn = document.getElementById("record-btn");
   if (!isRecording) {
-    const stream = await navigator.mediaDevices.getUser Media({ audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder = new MediaRecorder(stream);
     mediaRecorder.start();
     btn.innerHTML = '<i class="fas fa-stop"></i> Stop';
